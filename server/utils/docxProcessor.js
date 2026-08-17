@@ -45,10 +45,22 @@ async function detectDocxFields(docxBuffer) {
     });
   }
 
-  fields.push(...detectCheckboxGroups(docxBuffer));
-  fields.push(...detectResponseFields(docxBuffer));
+  const checkboxFields = detectCheckboxGroups(docxBuffer);
 
-  return fields;
+  // A fillable template pairs a checkbox group's "Other:" row with its own
+  // {{placeholder}} for the typed answer. That placeholder was also picked up
+  // by the scan above, which surfaced the same question twice: once as the
+  // real choice group, and again as a standalone text field with an opaque
+  // name like "Other - Table 6". The group owns it, so drop the duplicate.
+  const ownedByCheckbox = new Set(
+    checkboxFields.map((f) => f.otherPlaceholder).filter(Boolean)
+  );
+
+  const deduped = fields.filter((f) => !ownedByCheckbox.has(f.name));
+  deduped.push(...checkboxFields);
+  deduped.push(...detectResponseFields(docxBuffer));
+
+  return deduped;
 }
 
 /**
@@ -83,6 +95,20 @@ function fillDocxTemplate(docxBuffer, data = {}, fields = []) {
     renderData[name] = renderData[name]
       ? '[Signature attached — view in dashboard]'
       : '';
+  }
+
+  // Route a checkbox group's typed "Other" answer into the {{placeholder}}
+  // its row carries, so the render pass writes it in the document's own spot.
+  for (const field of checkboxFields) {
+    if (!field.otherPlaceholder) continue;
+    const value = data[field.name];
+    if (!value) continue;
+    const known = new Set(field.options || []);
+    const typed = value
+      .split(', ')
+      .filter(Boolean)
+      .find((part) => !known.has(part));
+    if (typed) renderData[field.otherPlaceholder] = typed;
   }
 
   const zip = new PizZip(docxAfterResponses);

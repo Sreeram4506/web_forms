@@ -14,6 +14,15 @@ const TYPE_OPTIONS = [
 
 const CHOICE_TYPES = ['choice-single', 'choice-multi'];
 
+// Where in the document this field came from. Auto-detected fields have
+// internal names like "__checkbox_table_4" that mean nothing to an admin, so
+// show what the field actually is instead of its bookkeeping key.
+const fieldOrigin = (field) => {
+  if (field.source === 'checkbox-table') return 'Tick-box question';
+  if (field.source === 'response-line') return 'Written answer';
+  return field.name;
+};
+
 const EditFields = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
@@ -131,7 +140,7 @@ const EditFields = () => {
           <div key={field.name} className="panel field-editor-row">
             <div className="field-editor-head">
               <span className="exhibit-letter">{exhibitLetter(index)}</span>
-              <span className="docket-number">{field.name}</span>
+              <span className="docket-number">{fieldOrigin(field)}</span>
             </div>
 
             <div className="form-group">

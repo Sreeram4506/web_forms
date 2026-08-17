@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: pdf-form-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - pdf-form-network
+
+  app:
+    build: .
+    container_name: pdf-form-app
+    ports:
+      - "5000:5000"
+    environment:
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/pdf-form-saas?authSource=admin
+      JWT_SECRET: your-secret-key-change-this-in-production
+      PORT: 5000
+      NODE_ENV: production
+    depends_on:
+      - mongodb
+    networks:
+      - pdf-form-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  pdf-form-network:
+    driver: bridge

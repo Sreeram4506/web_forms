@@ -1,0 +1,162 @@
+{
+  "title": "Choose the visual world for PDF Forms",
+  "question": "The roll assigned The Filing Room — a courthouse-docket system where templates are case files, links are docket entries, and submissions are stamped filings. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Filing Room",
+      "kicker": "THE ROLL",
+      "lineage": "courthouse case-filing index & docket register",
+      "thesis": "Every template is a case file, every link a docket entry, every submission a stamped filing — never a card in a dashboard.",
+      "palette": ["#1C1A17", "#F4F1EA", "#C1401F", "#6B6459"],
+      "materials": ["rubber date-stamp ink", "kraft tab dividers", "ruled index paper"],
+      "viewport": "A docket register: tab-indexed rail on the left, case-file cards stamped with a docket number and a red FILED/PENDING mark, kraft dividers between sections.",
+      "risk": "Reads bureaucratic instead of confident if the stamp motif spreads past status markers into decoration.",
+      "raised": [
+        { "from": "challenger-oscilloscope", "raise": "Status reads as an exact measured fact — \"Filed 08/17 2:14 PM\" — never a vague relative label." },
+        { "from": "challenger-type-specimen", "raise": "Hierarchy comes from weight and scale on a strict baseline grid, not boxes or card shadows." },
+        { "from": "challenger-sneaker-wall", "raise": "Opening a case file or link detail slides and hinges open like pulling a folder from the rail, not a flat modal fade." }
+      ],
+      "wireframe": {
+        "cols": 12,
+        "rows": 10,
+        "regions": [
+          { "label": "docket masthead / stamp bar", "x": 0, "y": 0, "w": 12, "h": 1, "accent": true },
+          { "label": "tab-indexed rail", "x": 0, "y": 1, "w": 2, "h": 9 },
+          { "label": "case file — stamped", "x": 2, "y": 1, "w": 5, "h": 4 },
+          { "label": "case file — stamped", "x": 7, "y": 1, "w": 5, "h": 4 },
+          { "label": "case file — stamped", "x": 2, "y": 5, "w": 5, "h": 4 },
+          { "label": "case file — stamped", "x": 7, "y": 5, "w": 5, "h": 4 }
+        ]
+      }
+    },
+    {
+      "id": "model-pick",
+      "label": "The Ledger",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "accountant's ruled columnar worksheet",
+      "thesis": "The whole product as one ruled ledger — templates, links, and submissions are rows in a worksheet, not cards in a grid.",
+      "palette": ["#14231F", "#EFEBE2", "#2F6E4F", "#B08A3E"],
+      "materials": ["ruled columns", "tabular figures", "sum-line rules"],
+      "viewport": "A single continuous worksheet: ruled column headers, monospaced figures, a totals rule closing each section.",
+      "risk": "Familiar territory — tabular, spreadsheet-adjacent UI is common in fintech/accounting SaaS already, so it risks reading expected rather than distinct.",
+      "wireframe": {
+        "cols": 12,
+        "rows": 10,
+        "regions": [
+          { "label": "toolbar", "x": 0, "y": 0, "w": 12, "h": 1 },
+          { "label": "column header rule", "x": 0, "y": 1, "w": 12, "h": 1, "accent": true },
+          { "label": "ledger rows", "x": 0, "y": 2, "w": 12, "h": 6 },
+          { "label": "totals / summary rule", "x": 0, "y": 8, "w": 12, "h": 2 }
+        ]
+      }
+    },
+    {
+      "id": "challenger-botanical-folio",
+      "label": "The Seasonal Folio",
+      "verdict": "competitive",
+      "lineage": "botanical folio plates, fixed-scale seasonal sequence",
+      "thesis": "Every submission plate aligns on the same scale and baseline, so an empty template and a filled one read as two states of one plant.",
+      "palette": ["#2B3A2A", "#EDE6D6", "#8A3B2B", "#4A5A3E"],
+      "materials": ["engraved plate line", "registered overlay", "hairline rule"],
+      "viewport": "Fixed-scale plates in a row — template, in-progress, filed — sharing one baseline and caption strip.",
+      "case": "Fuses cleanly on clarity: the fixed-scale comparative-plate device makes template-vs-filled states directly legible. Loses narrowly on audience identification — legal/accounting clients don't live in botanical-illustration culture the way they live in filing culture.",
+      "risk": "The plate palette drifts toward the warm cream-and-sepia default this brief must avoid unless pushed cooler and inkier than a literal botanical plate.",
+      "hero": "https://impeccable.style/worlds/cards/editorial-sequence-montage-botanical-folio-season-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/editorial-sequence-montage-botanical-folio-season.webp",
+      "wireframe": {
+        "cols": 12,
+        "rows": 10,
+        "regions": [
+          { "label": "index header", "x": 0, "y": 0, "w": 12, "h": 1 },
+          { "label": "plate — template", "x": 0, "y": 1, "w": 4, "h": 6 },
+          { "label": "plate — in progress", "x": 4, "y": 1, "w": 4, "h": 6, "accent": true },
+          { "label": "plate — filed", "x": 8, "y": 1, "w": 4, "h": 6 },
+          { "label": "caption strip", "x": 0, "y": 7, "w": 12, "h": 1 },
+          { "label": "stage index", "x": 0, "y": 8, "w": 12, "h": 2 }
+        ]
+      }
+    },
+    {
+      "id": "challenger-sneaker-wall",
+      "label": "Sneaker Archive Wall",
+      "verdict": "declined",
+      "lineage": "stacked sneaker-box archive, silhouette end labels",
+      "palette": ["#B5622E", "#141414", "#F2EDE4"],
+      "materials": ["box board", "silhouette line art", "tissue paper"],
+      "case": "Fuses poorly: legal and accounting clients hold no relationship to collector/streetwear culture, and the mapping (template = box) doesn't clarify the mechanism.",
+      "kept": "Tactile pull-open retrieval motion — raised into the assigned direction.",
+      "hero": "https://impeccable.style/worlds/cards/textiles-weave-drape-fashion-sneaker-box-stacks-hero.webp"
+    },
+    {
+      "id": "challenger-cyclorama",
+      "label": "Dawn Cyclorama",
+      "verdict": "declined",
+      "lineage": "theatrical cyclorama, night-to-day lighting cue",
+      "palette": ["#0B1330", "#2F4C86", "#E8B7B0"],
+      "materials": ["gradient wash", "cue-stencil caps"],
+      "case": "Fuses poorly: theatrical lighting has no bearing on a legal client's scene, and the atmospheric night-to-day metaphor clarifies status less than a literal stamp does.",
+      "kept": "Smooth continuous state transitions over abrupt swaps — noted, not raised: a status the client must trust reads clearer as a literal stamp change than a mood shift.",
+      "hero": "https://impeccable.style/worlds/cards/stagecraft-theater-lighting-cyclorama-dawn-hero.webp"
+    },
+    {
+      "id": "challenger-generative-identity",
+      "label": "Generative Parametric Identity",
+      "verdict": "declined",
+      "lineage": "algorithmic seed-derived brand identity",
+      "palette": ["#111111", "#F5F5F5", "#7C3AED"],
+      "materials": ["flat vector", "live-reseeded palette"],
+      "case": "Fuses poorly: a mark and palette that visibly mutate undermine trust for a client entering real personal and financial information — the opposite of what this surface needs to prove.",
+      "kept": "One seed governing every token — folded in as ordinary design-system discipline, not a raise; the product needs stability, not live mutation.",
+      "hero": "https://impeccable.style/worlds/cards/generative-parametric-identity-hero.webp"
+    },
+    {
+      "id": "challenger-oscilloscope",
+      "label": "Signal Bench Oscilloscope",
+      "verdict": "declined",
+      "lineage": "CRT oscilloscope, phosphor trace on graticule",
+      "palette": ["#0A0F0A", "#39FF6A", "#8FA08F"],
+      "materials": ["phosphor glow", "etched graticule", "detented knobs"],
+      "case": "Fuses poorly: an electronics-lab instrument reads as a dev tool, not a law office, undermining the trust a legal client needs on first look.",
+      "kept": "Exact, measured state readouts — raised into the assigned direction.",
+      "hero": "https://impeccable.style/worlds/cards/scientific-notation-oscilloscope-signal-bench-hero.webp"
+    },
+    {
+      "id": "challenger-type-specimen",
+      "label": "Interactive Type Specimen",
+      "verdict": "declined",
+      "lineage": "variable-font specimen, live axis sliders",
+      "palette": ["#FCFCFC", "#0A0A0A"],
+      "materials": ["display type at scale", "strict baseline grid"],
+      "case": "Fuses poorly: a type-foundry demo has no functional mapping to document collection, and foundry/type-nerd culture isn't the legal client's world.",
+      "kept": "Scale/weight-driven hierarchy on a strict grid — raised into the assigned direction.",
+      "hero": "https://impeccable.style/worlds/cards/variable-font-specimen-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code", "toggle": false },
+  "canon": true,
+  "canonCard": {
+    "label": "The Document Portal Standard",
+    "thesis": "Clean white cards, blue accent, rounded corners — instantly familiar, instantly forgettable.",
+    "palette": ["#FFFFFF", "#1E293B", "#2563EB"],
+    "materials": ["flat vector icons", "drop shadows"],
+    "viewport": "Sidebar nav, card grid of templates, pill badges for status — the arrangement every document SaaS ships.",
+    "risk": "Indistinguishable from DocuSign, HelloSign, or any other forms tool, by design.",
+    "wireframe": {
+      "cols": 12,
+      "rows": 10,
+      "regions": [
+        { "label": "sidebar nav", "x": 0, "y": 0, "w": 3, "h": 10, "accent": true },
+        { "label": "header", "x": 3, "y": 0, "w": 9, "h": 1 },
+        { "label": "card", "x": 3, "y": 1, "w": 3, "h": 3 },
+        { "label": "card", "x": 6, "y": 1, "w": 3, "h": 3 },
+        { "label": "card", "x": 9, "y": 1, "w": 3, "h": 3 },
+        { "label": "card", "x": 3, "y": 4, "w": 3, "h": 3 },
+        { "label": "card", "x": 6, "y": 4, "w": 3, "h": 3 },
+        { "label": "card", "x": 9, "y": 4, "w": 3, "h": 3 }
+      ]
+    }
+  },
+  "steer": true
+}

@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const path = require('path');
 
 dotenv.config();
 
@@ -31,15 +30,6 @@ app.use('/api/assignments', require('./routes/assignmentRoutes'));
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
-
-// Serve the built React client in production
-if (process.env.NODE_ENV === 'production') {
-  const clientBuild = path.join(__dirname, '..', 'client', 'build');
-  app.use(express.static(clientBuild));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(clientBuild, 'index.html'));
-  });
-}
 
 // Error handling middleware
 app.use((err, req, res, next) => {

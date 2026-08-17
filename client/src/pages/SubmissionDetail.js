@@ -24,15 +24,19 @@ const SubmissionDetail = () => {
       .finally(() => setLoading(false));
   }, [submissionId]);
 
-  const handleDownload = async () => {
-    setDownloading(true);
+  const download = async (kind) => {
+    setDownloading(kind);
     try {
-      const response = await axios.post(`/api/submissions/${submissionId}/generate-pdf`, {}, { responseType: 'blob' });
-      downloadBlobResponse(response, `filled-${submission.templateId?.name || 'submission'}`);
+      const path =
+        kind === 'pdf'
+          ? `/api/submissions/${submissionId}/report-pdf`
+          : `/api/submissions/${submissionId}/generate-pdf`;
+      const response = await axios.post(path, {}, { responseType: 'blob' });
+      downloadBlobResponse(response, `${submission.templateId?.name || 'submission'}`);
     } catch (err) {
       setError('Failed to download');
     } finally {
-      setDownloading(false);
+      setDownloading('');
     }
   };
 
@@ -76,12 +80,24 @@ const SubmissionDetail = () => {
         Submitted {new Date(submission.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
       </p>
 
-      <div style={{ marginBottom: '1.5rem' }}>
-        <button className="btn-primary" onClick={handleDownload} disabled={downloading}>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <button className="btn-primary" onClick={() => download('pdf')} disabled={!!downloading}>
           <Download size={17} />
-          {downloading ? 'Preparing…' : `Download filled ${template.sourceType === 'docx' ? 'DOCX' : 'PDF'}`}
+          {downloading === 'pdf' ? 'Preparing…' : 'Download PDF'}
         </button>
+        {template.sourceType === 'docx' && (
+          <button className="btn-outline" onClick={() => download('source')} disabled={!!downloading}>
+            <Download size={17} />
+            {downloading === 'source' ? 'Preparing…' : 'Download DOCX'}
+          </button>
+        )}
       </div>
+      {template.sourceType === 'docx' && (
+        <p className="field-hint" style={{ marginTop: '-1rem', marginBottom: '1.5rem' }}>
+          The PDF is a clean record of every question and answer. The DOCX is your original
+          document with the boxes ticked and the blanks filled in.
+        </p>
+      )}
 
       {fields.length === 0 ? (
         <div className="register">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from '../api';
-import { Copy, Check, Trash2, Download, BookMarked, RefreshCw, AlertTriangle, Stamp } from 'lucide-react';
+import { Copy, Check, Trash2, Download, FileText, BookMarked, RefreshCw, AlertTriangle, Stamp } from 'lucide-react';
 import { downloadBlobResponse } from '../utils/download';
 
 const generatePassword = () => Math.random().toString(36).slice(-10);
@@ -75,9 +75,13 @@ const AssignmentsList = () => {
     }
   };
 
-  const handleDownload = async (assignment) => {
+  const handleDownload = async (assignment, kind = 'pdf') => {
     try {
-      const response = await axios.get(`/api/assignments/${assignment.id}/download`, { responseType: 'blob' });
+      const path =
+        kind === 'pdf'
+          ? `/api/assignments/${assignment.id}/download-report`
+          : `/api/assignments/${assignment.id}/download`;
+      const response = await axios.get(path, { responseType: 'blob' });
       downloadBlobResponse(response, `${assignment.clientName}-${assignment.template?.name || 'filing'}.pdf`);
     } catch (err) {
       setError('Failed to download the filed document');
@@ -209,17 +213,23 @@ const AssignmentsList = () => {
               </span>
               <span className="register-actions">
                 <button
-                  onClick={() => handleDownload(a)}
-                  title={
-                    a.status === 'submitted'
-                      ? `Download filed ${a.template?.sourceType === 'docx' ? 'DOCX' : 'PDF'}`
-                      : 'Awaiting submission'
-                  }
+                  onClick={() => handleDownload(a, 'pdf')}
+                  title={a.status === 'submitted' ? 'Download filed PDF' : 'Awaiting submission'}
                   disabled={a.status !== 'submitted'}
                   className="btn-ghost"
                 >
                   <Download size={17} />
                 </button>
+                {a.template?.sourceType === 'docx' && (
+                  <button
+                    onClick={() => handleDownload(a, 'source')}
+                    title={a.status === 'submitted' ? 'Download filed DOCX' : 'Awaiting submission'}
+                    disabled={a.status !== 'submitted'}
+                    className="btn-ghost"
+                  >
+                    <FileText size={17} />
+                  </button>
+                )}
                 <button onClick={() => handleRevoke(a.id)} title="Revoke" className="btn-ghost" style={{ color: 'var(--danger)' }}>
                   <Trash2 size={17} />
                 </button>

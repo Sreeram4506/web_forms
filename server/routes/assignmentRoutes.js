@@ -8,6 +8,7 @@ const FormAssignment = require('../models/FormAssignment');
 const authMiddleware = require('../middleware/auth');
 const { requireAdmin, requireClient } = require('../middleware/roles');
 const { generateFinalPdf } = require('../utils/formFiller');
+const { generateReportPdf } = require('../utils/pdfReport');
 
 const router = express.Router();
 
@@ -142,6 +143,34 @@ router.get('/:id/download', authMiddleware, requireAdmin, async (req, res) => {
 
     const filename = `${sanitizeForFilename(assignment.clientName)}-${sanitizeForFilename(template.name)}.${extension}`;
     res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ message: 'Error generating PDF', error: err.message });
+  }
+});
+
+// ---- Admin: download a client's filing as a PDF record ----
+router.get('/:id/download-report', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const assignment = await FormAssignment.findOne({ _id: req.params.id, adminId: req.userId });
+    if (!assignment) {
+      return res.status(404).json({ message: 'Link not found' });
+    }
+    if (assignment.status !== 'submitted' || !assignment.submissionId) {
+      return res.status(400).json({ message: 'This form has not been submitted yet' });
+    }
+
+    const submission = await Submission.findById(assignment.submissionId);
+    const template = await Template.findById(assignment.templateId).select('-fileData');
+    if (!submission || !template) {
+      return res.status(404).json({ message: 'Submission or template not found' });
+    }
+
+    const buffer = await generateReportPdf(template, Object.fromEntries(submission.data));
+
+    const filename = `${sanitizeForFilename(assignment.clientName)}-${sanitizeForFilename(template.name)}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
   } catch (err) {

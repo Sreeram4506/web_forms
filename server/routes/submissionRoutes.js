@@ -4,6 +4,7 @@ const Template = require('../models/Template');
 const authMiddleware = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/roles');
 const { generateFinalPdf } = require('../utils/formFiller');
+const { generateReportPdf } = require('../utils/pdfReport');
 
 const router = express.Router();
 
@@ -160,6 +161,35 @@ router.post('/:id/generate-pdf', async (req, res) => {
     // Send file as response
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="filled-${template.name}.${extension}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ message: 'Error generating PDF', error: err.message });
+  }
+});
+
+// Download the submission as a PDF record of every question and its answer.
+// Separate from /generate-pdf, which returns the filled source document in
+// its original format (a .docx template stays a .docx there).
+router.post('/:id/report-pdf', async (req, res) => {
+  try {
+    const submission = await Submission.findOne({
+      _id: req.params.id,
+      userId: req.userId,
+    });
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
+    const template = await Template.findById(submission.templateId).select('-fileData');
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    const buffer = await generateReportPdf(template, Object.fromEntries(submission.data));
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${template.name}.pdf"`);
     res.send(buffer);
   } catch (err) {
     res.status(500).json({ message: 'Error generating PDF', error: err.message });

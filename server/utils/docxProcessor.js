@@ -6,6 +6,7 @@ const {
   applyCheckboxSelections,
   detectResponseFields,
   applyResponseAnswers,
+  sanitizeLabel,
 } = require('./docxChoiceDetector');
 
 const PLACEHOLDER_RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
@@ -34,7 +35,7 @@ async function detectDocxFields(docxBuffer) {
     seen.add(name);
     fields.push({
       name,
-      label: name,
+      label: sanitizeLabel(name) || name,
       hint: '',
       type: 'text',
       defaultValue: '',

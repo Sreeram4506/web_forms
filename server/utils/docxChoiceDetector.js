@@ -31,6 +31,18 @@ function stripTags(xml) {
   );
 }
 
+// A section heading (e.g. "ABOUT THE BRAND") is sometimes adjacent to the
+// next question with no whitespace gap between them in the stripped text,
+// so it gets pulled in as part of the label. Detected and split off here
+// instead of left fused into the question, since "SECTION NAME What is..."
+// reads as one garbled line rather than a labeled, specific question.
+const SECTION_PREFIX_RE = /^([A-Z][A-Z\s&/]{2,}[A-Z])\s+(?=[A-Z][a-z])/;
+
+const toTitleCase = (shout) =>
+  shout
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 function labelBefore(documentXml, table, allTables) {
   const tableListIndex = allTables.findIndex((t) => t.start === table.start);
   const prevEnd = tableListIndex > 0 ? allTables[tableListIndex - 1].end : 0;
@@ -39,7 +51,14 @@ function labelBefore(documentXml, table, allTables) {
     .split(/[\s\xa0]{2,}/)
     .map((s) => s.trim())
     .filter(Boolean);
-  return segments.length ? segments[segments.length - 1] : null;
+  if (!segments.length) return { label: null, section: null };
+
+  const raw = segments[segments.length - 1];
+  const match = SECTION_PREFIX_RE.exec(raw);
+  if (match) {
+    return { label: raw.slice(match[0].length).trim(), section: toTitleCase(match[1]) };
+  }
+  return { label: raw, section: null };
 }
 
 /**
@@ -83,12 +102,12 @@ function detectCheckboxGroups(docxBuffer) {
 
     if (options.length === 0) return;
 
-    const label = labelBefore(documentXml, table, allTables) || `Question ${seq + 1}`;
+    const { label, section } = labelBefore(documentXml, table, allTables);
 
     fields.push({
       name: `__checkbox_table_${table.index}`,
-      label,
-      hint: '',
+      label: label || `Question ${seq + 1}`,
+      hint: section || '',
       type: 'choice-multi',
       defaultValue: '',
       required: false,

@@ -1,13 +1,16 @@
 const mammoth = require('mammoth');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
+const { detectCheckboxGroups, applyCheckboxSelections } = require('./docxChoiceDetector');
 
 const PLACEHOLDER_RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
 
 /**
- * Detect fillable fields in a .docx by scanning for {{Field Name}} placeholders.
- * Returns the same descriptor shape as pdfProcessor's detectPDFFields so the
- * rest of the pipeline can treat PDF- and DOCX-sourced templates identically.
+ * Detect fillable fields in a .docx from two sources: explicit
+ * {{Field Name}} placeholders, and checkbox-style questions authored as a
+ * Word table (☐ Option per cell) with no placeholder at all. Returns the
+ * same descriptor shape as pdfProcessor's detectPDFFields so the rest of
+ * the pipeline can treat PDF- and DOCX-sourced templates identically.
  *
  * @param {Buffer} docxBuffer raw .docx bytes
  * @returns {Promise<Array>} detected field descriptors
@@ -31,14 +34,20 @@ async function detectDocxFields(docxBuffer) {
       required: true,
       options: [],
       allowOther: false,
+      source: 'placeholder',
     });
   }
+
+  fields.push(...detectCheckboxGroups(docxBuffer));
 
   return fields;
 }
 
 /**
- * Replace {{Field Name}} placeholders in a .docx with submitted values.
+ * Fill a .docx from its detected fields, whichever source each one came
+ * from. Checkbox-table fields have no {{}} placeholder to substitute — they
+ * get applied first as a direct structural edit (toggle ☐/☑, insert Other
+ * text) — then the remaining {{Field Name}} placeholders render normally.
  *
  * Signature fields hold a base64 image data URL, which is meaningless as
  * visible document text, so they're rendered as a readable marker instead;
@@ -47,10 +56,13 @@ async function detectDocxFields(docxBuffer) {
  *
  * @param {Buffer} docxBuffer raw .docx bytes of the template
  * @param {Object} data values keyed by field name
- * @param {Array} fields template field descriptors (for signature detection)
+ * @param {Array} fields template field descriptors (for signature/checkbox detection)
  * @returns {Buffer} filled .docx bytes
  */
 function fillDocxTemplate(docxBuffer, data = {}, fields = []) {
+  const checkboxFields = fields.filter((f) => f.source === 'checkbox-table');
+  const docxAfterCheckboxes = applyCheckboxSelections(docxBuffer, data, checkboxFields);
+
   const signatureFieldNames = new Set(
     fields.filter((f) => f.type === 'signature').map((f) => f.name)
   );
@@ -62,7 +74,7 @@ function fillDocxTemplate(docxBuffer, data = {}, fields = []) {
       : '';
   }
 
-  const zip = new PizZip(docxBuffer);
+  const zip = new PizZip(docxAfterCheckboxes);
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
@@ -72,7 +84,7 @@ function fillDocxTemplate(docxBuffer, data = {}, fields = []) {
 
   doc.render(renderData);
 
-  return doc.getZip().generate({ type: 'nodebuffer' });
+  return doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
 module.exports = {

@@ -9,6 +9,8 @@ const fieldSchema = new mongoose.Schema({
   required: Boolean,
   options: [String], // choice-single/choice-multi option list
   allowOther: Boolean, // adds an "Other (please specify)" choice with free text
+  source: String, // 'placeholder' (default, {{Field Name}}) | 'checkbox-table' (auto-detected)
+  tableIndex: Number, // for source:'checkbox-table', which <w:tbl> in document.xml this maps to
 }, { _id: false });
 
 const templateSchema = new mongoose.Schema({

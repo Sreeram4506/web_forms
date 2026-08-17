@@ -162,6 +162,12 @@ const UploadTemplate = () => {
           <button type="submit" className="btn-primary btn-block" disabled={loading || !file}>
             {loading ? 'Filing…' : 'File template'}
           </button>
+          {loading && (
+            <p className="field-hint" style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+              Reading the document and working out each question. A long form can take up to a
+              minute — this page will move on by itself when it's done.
+            </p>
+          )}
         </form>
       </div>
     </div>

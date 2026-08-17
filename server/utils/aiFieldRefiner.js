@@ -4,8 +4,10 @@ const BATCH_SIZE = 25;
 const TIMEOUT_MS = 20000;
 // Batches run concurrently, but capped: a 226-field document is 10 batches,
 // and firing all of them at once risks rate limiting while running them one
-// after another would take minutes and time the upload out.
-const MAX_CONCURRENCY = 4;
+// after another would take minutes and time the upload out. These are small
+// independent requests, so 8 in flight keeps a large document to two waves
+// without approaching a rate limit.
+const MAX_CONCURRENCY = 8;
 // Hard ceiling on the whole refinement step. Whatever has come back by then
 // is kept and the rest degrade to their structural values, so refinement can
 // never be the reason an upload fails.

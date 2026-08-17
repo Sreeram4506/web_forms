@@ -5,6 +5,7 @@ const authMiddleware = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/roles');
 const { detectPDFFields } = require('../utils/pdfProcessor');
 const { detectDocxFields } = require('../utils/docxProcessor');
+const { refineFields } = require('../utils/aiFieldRefiner');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -34,6 +35,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     } else {
       return res.status(400).json({ message: 'Only PDF or Word (.docx) files are allowed' });
     }
+
+    fields = await refineFields(fields);
 
     // Create template
     const template = new Template({

@@ -194,7 +194,7 @@ const FillForm = () => {
             </button>
             <button type="button" onClick={handleGeneratePDF} className="btn-primary" disabled={generating || saving}>
               <Download size={17} />
-              {generating ? 'Generating…' : 'Download PDF'}
+              {generating ? 'Generating…' : `Download ${template.sourceType === 'docx' ? 'DOCX' : 'PDF'}`}
             </button>
             <button type="button" onClick={handleSubmitForm} className="btn-secondary" disabled={saving}>
               <Send size={17} />

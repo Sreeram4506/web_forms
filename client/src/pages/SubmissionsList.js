@@ -100,7 +100,11 @@ const SubmissionsList = () => {
               </span>
               <span className="register-cell-meta">{new Date(submission.createdAt).toLocaleDateString()}</span>
               <span className="register-actions">
-                <button onClick={() => handleDownloadPDF(submission.id)} title="Download PDF" className="btn-ghost">
+                <button
+                  onClick={() => handleDownloadPDF(submission.id)}
+                  title={`Download ${template?.sourceType === 'docx' ? 'DOCX' : 'PDF'}`}
+                  className="btn-ghost"
+                >
                   <Download size={17} />
                 </button>
                 <button onClick={() => handleDelete(submission.id)} title="Delete" className="btn-ghost" style={{ color: 'var(--danger)' }}>

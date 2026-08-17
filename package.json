@@ -20,8 +20,7 @@
     "pdf-lib": "^1.17.1",
     "mammoth": "^1.8.0",
     "docxtemplater": "^3.50.0",
-    "pizzip": "^3.1.7",
-    "puppeteer": "^23.9.0"
+    "pizzip": "^3.1.7"
   },
   "devDependencies": {
     "mongodb-memory-server": "^9.1.6",

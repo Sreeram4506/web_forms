@@ -210,7 +210,11 @@ const AssignmentsList = () => {
               <span className="register-actions">
                 <button
                   onClick={() => handleDownload(a)}
-                  title={a.status === 'submitted' ? 'Download filed PDF' : 'Awaiting submission'}
+                  title={
+                    a.status === 'submitted'
+                      ? `Download filed ${a.template?.sourceType === 'docx' ? 'DOCX' : 'PDF'}`
+                      : 'Awaiting submission'
+                  }
                   disabled={a.status !== 'submitted'}
                   className="btn-ghost"
                 >

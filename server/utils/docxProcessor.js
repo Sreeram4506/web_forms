@@ -1,16 +1,23 @@
 const mammoth = require('mammoth');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
-const { detectCheckboxGroups, applyCheckboxSelections } = require('./docxChoiceDetector');
+const {
+  detectCheckboxGroups,
+  applyCheckboxSelections,
+  detectResponseFields,
+  applyResponseAnswers,
+} = require('./docxChoiceDetector');
 
 const PLACEHOLDER_RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
 
 /**
- * Detect fillable fields in a .docx from two sources: explicit
- * {{Field Name}} placeholders, and checkbox-style questions authored as a
- * Word table (☐ Option per cell) with no placeholder at all. Returns the
- * same descriptor shape as pdfProcessor's detectPDFFields so the rest of
- * the pipeline can treat PDF- and DOCX-sourced templates identically.
+ * Detect fillable fields in a .docx from three sources: explicit
+ * {{Field Name}} placeholders, checkbox-style questions authored as a Word
+ * table (☐ Option per cell), and free-text "Response:" blank lines (legacy
+ * [Bracket Placeholder] or plain underline padding, no placeholder tag at
+ * all). Returns the same descriptor shape as pdfProcessor's detectPDFFields
+ * so the rest of the pipeline can treat PDF- and DOCX-sourced templates
+ * identically.
  *
  * @param {Buffer} docxBuffer raw .docx bytes
  * @returns {Promise<Array>} detected field descriptors
@@ -39,6 +46,7 @@ async function detectDocxFields(docxBuffer) {
   }
 
   fields.push(...detectCheckboxGroups(docxBuffer));
+  fields.push(...detectResponseFields(docxBuffer));
 
   return fields;
 }
@@ -63,6 +71,9 @@ function fillDocxTemplate(docxBuffer, data = {}, fields = []) {
   const checkboxFields = fields.filter((f) => f.source === 'checkbox-table');
   const docxAfterCheckboxes = applyCheckboxSelections(docxBuffer, data, checkboxFields);
 
+  const responseFields = fields.filter((f) => f.source === 'response-line');
+  const docxAfterResponses = applyResponseAnswers(docxAfterCheckboxes, data, responseFields);
+
   const signatureFieldNames = new Set(
     fields.filter((f) => f.type === 'signature').map((f) => f.name)
   );
@@ -74,7 +85,7 @@ function fillDocxTemplate(docxBuffer, data = {}, fields = []) {
       : '';
   }
 
-  const zip = new PizZip(docxAfterCheckboxes);
+  const zip = new PizZip(docxAfterResponses);
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,

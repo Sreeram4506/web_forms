@@ -212,9 +212,116 @@ function applyCheckboxSelections(docxBuffer, data, checkboxFields) {
   return zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
+// Matches a "Response:" label run immediately followed by the answer run
+// that holds either a legacy [Bracket Placeholder] or blank underline
+// padding (a run of non-breaking spaces) — the document's own pattern for a
+// free-text blank line, distinct from both {{}} placeholders and checkbox
+// tables and, until this existed, not detected as a fillable field at all.
+const RESPONSE_LINE_RE =
+  /(<w:r>(?:(?!<w:r>).)*?<w:t[^>]*>\s*Response:\s*<\/w:t><\/w:r>)(<w:r>(?:(?!<w:r>).)*?<w:t[^>]*>)([^<]*)(<\/w:t><\/w:r>)/gs;
+
+function labelBeforePosition(documentXml, matchStart) {
+  const paraEnd = documentXml.lastIndexOf('</w:p>', matchStart);
+  const paraStart = documentXml.lastIndexOf('</w:p>', paraEnd - 1);
+  const before = stripTags(documentXml.slice(paraStart >= 0 ? paraStart : 0, paraEnd));
+  const segments = before
+    .split(/[\s\xa0]{2,}/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!segments.length) return { label: null, section: null };
+
+  const raw = segments[segments.length - 1];
+  const match = SECTION_PREFIX_RE.exec(raw);
+  if (match) {
+    return { label: raw.slice(match[0].length).trim(), section: toTitleCase(match[1]) };
+  }
+  return { label: raw, section: null };
+}
+
+/**
+ * Auto-detects free-text answer blanks authored as a "Response:" label
+ * followed by either a legacy [Bracket Placeholder] or blank underline
+ * padding, rather than a {{Field Name}} placeholder. Each becomes a text
+ * field; the question label is read from the paragraph immediately
+ * preceding the "Response:" line.
+ *
+ * @param {Buffer} docxBuffer raw .docx bytes
+ * @returns {Array} field descriptors with source:'response-line' + responseIndex
+ */
+function detectResponseFields(docxBuffer) {
+  const zip = new PizZip(docxBuffer);
+  const documentXml = zip.file('word/document.xml').asText();
+
+  const fields = [];
+  let seq = 0;
+  for (const m of documentXml.matchAll(RESPONSE_LINE_RE)) {
+    const { label, section } = labelBeforePosition(documentXml, m.index);
+    fields.push({
+      name: `__response_line_${seq}`,
+      label: label || `Question ${seq + 1}`,
+      hint: section || '',
+      type: 'text',
+      defaultValue: '',
+      required: false,
+      options: [],
+      allowOther: false,
+      source: 'response-line',
+      responseIndex: seq,
+    });
+    seq += 1;
+  }
+
+  return fields;
+}
+
+/**
+ * Writes typed answers into the "Response:" blank lines detected by
+ * detectResponseFields. Runs on the raw zip before docxtemplater's {{}}
+ * render pass, same as checkbox tables, since these fields have no
+ * placeholder tag to substitute — the answer run's text is replaced
+ * directly, dropping any legacy [Bracket Placeholder] it held.
+ *
+ * @param {Buffer} docxBuffer raw .docx bytes
+ * @param {Object} data values keyed by field name
+ * @param {Array} responseFields field descriptors with source:'response-line'
+ * @returns {Buffer} docx bytes with response lines patched in place
+ */
+function applyResponseAnswers(docxBuffer, data, responseFields) {
+  if (!responseFields || responseFields.length === 0) return docxBuffer;
+
+  const zip = new PizZip(docxBuffer);
+  let documentXml = zip.file('word/document.xml').asText();
+
+  const byIndex = new Map(responseFields.map((f) => [f.responseIndex, f]));
+  const edits = [];
+  let seq = 0;
+  for (const m of documentXml.matchAll(RESPONSE_LINE_RE)) {
+    const field = byIndex.get(seq);
+    seq += 1;
+    if (!field) continue;
+    const value = data[field.name];
+    if (!value) continue;
+
+    const answerRunStart = m.index + m[1].length;
+    const answerRunEnd = m.index + m[0].length;
+    const newAnswerRun = `${m[2]}${escapeXml(value)}${m[4]}`;
+    edits.push({ start: answerRunStart, end: answerRunEnd, newXml: newAnswerRun });
+  }
+
+  edits.sort((a, b) => b.start - a.start); // reverse order: patch from the end backwards
+  for (const edit of edits) {
+    documentXml = documentXml.slice(0, edit.start) + edit.newXml + documentXml.slice(edit.end);
+  }
+
+  zip.file('word/document.xml', documentXml);
+  return zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
+}
+
 module.exports = {
   detectCheckboxGroups,
   applyCheckboxSelections,
+  detectResponseFields,
+  applyResponseAnswers,
   CHECKBOX_PAIR_RE,
   OTHER_RE,
   decodeXmlEntities,

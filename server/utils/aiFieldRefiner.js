@@ -2,6 +2,14 @@ const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const MODEL = 'gpt-4o-mini';
 const BATCH_SIZE = 25;
 const TIMEOUT_MS = 20000;
+// Batches run concurrently, but capped: a 226-field document is 10 batches,
+// and firing all of them at once risks rate limiting while running them one
+// after another would take minutes and time the upload out.
+const MAX_CONCURRENCY = 4;
+// Hard ceiling on the whole refinement step. Whatever has come back by then
+// is kept and the rest degrade to their structural values, so refinement can
+// never be the reason an upload fails.
+const TOTAL_BUDGET_MS = 60000;
 
 const VALID_TYPES = ['text', 'boolean', 'choice-single', 'choice-multi', 'signature'];
 
@@ -122,22 +130,38 @@ async function refineFields(fields) {
 
   const refined = fields.map((f) => ({ ...f }));
 
+  const batches = [];
   for (let start = 0; start < refined.length; start += BATCH_SIZE) {
-    const batch = refined.slice(start, start + BATCH_SIZE);
-    try {
-      const results = await callOpenAI(apiKey, batch);
-      for (const result of results) {
-        const idx = Number(result.id);
-        if (!Number.isInteger(idx) || idx < 0 || idx >= batch.length) continue;
-        const target = batch[idx];
-        Object.assign(target, coerceRefinement(result, target));
-      }
-    } catch (err) {
-      console.warn(
-        `AI field refinement skipped for batch at ${start}: ${err.message}`
-      );
-    }
+    batches.push(refined.slice(start, start + BATCH_SIZE));
   }
+
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
+  let cursor = 0;
+
+  const worker = async () => {
+    while (cursor < batches.length) {
+      const myIndex = cursor;
+      cursor += 1;
+      if (Date.now() >= deadline) return;
+
+      const batch = batches[myIndex];
+      try {
+        const results = await callOpenAI(apiKey, batch);
+        for (const result of results) {
+          const idx = Number(result.id);
+          if (!Number.isInteger(idx) || idx < 0 || idx >= batch.length) continue;
+          const target = batch[idx];
+          Object.assign(target, coerceRefinement(result, target));
+        }
+      } catch (err) {
+        console.warn(`AI field refinement skipped for batch ${myIndex}: ${err.message}`);
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(MAX_CONCURRENCY, batches.length) }, worker)
+  );
 
   return refined;
 }

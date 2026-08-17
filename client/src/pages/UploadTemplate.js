@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../api';
+import axios, { UPLOAD_TIMEOUT_MS } from '../api';
 import { UploadCloud, FileCheck2, AlertTriangle, Info } from 'lucide-react';
 import { exhibitLetter } from '../utils/exhibitLetter';
 
@@ -49,6 +49,7 @@ const UploadTemplate = () => {
 
       const response = await axios.post('/api/templates/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: UPLOAD_TIMEOUT_MS,
       });
 
       const { id, fields } = response.data.template;
@@ -59,7 +60,13 @@ const UploadTemplate = () => {
         navigate(`/templates/${id}/fields`);
       }, 1400);
     } catch (err) {
-      setError(err.response?.data?.message || 'Upload failed');
+      // Distinguish a timeout from a server-side rejection: a bare
+      // "Upload failed" gave no clue which of the two had happened.
+      if (err.code === 'ECONNABORTED') {
+        setError('Upload timed out. Large documents can take a while — please try again.');
+      } else {
+        setError(err.response?.data?.message || err.message || 'Upload failed');
+      }
     } finally {
       setLoading(false);
     }

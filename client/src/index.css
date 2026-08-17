@@ -321,7 +321,7 @@ input[type='radio'] {
   color: var(--ink);
 }
 
-.form-group.required label::after {
+.form-group.required > label::after {
   content: '*';
   color: var(--stamp);
   margin-left: 0.25rem;
@@ -590,6 +590,86 @@ input[type='radio'] {
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   Choice lists (radio / checkbox groups) + signature upload
+   ========================================================================== */
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.choice-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 400;
+  font-size: 0.9375rem;
+  color: var(--ink);
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.choice-row:hover {
+  border-color: var(--line-strong);
+  background: var(--paper-sunken);
+}
+
+.choice-row input {
+  width: auto;
+  accent-color: var(--stamp);
+}
+
+.choice-other-input {
+  margin-top: 0.6rem;
+}
+
+.signature-preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem;
+  background: var(--paper-raised);
+}
+
+.signature-preview img {
+  max-height: 90px;
+  max-width: 220px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 0.35rem;
+}
+
+/* ==========================================================================
+   Field editor (see EditFields.js)
+   ========================================================================== */
+
+.field-editor-row {
+  margin-bottom: 1.25rem;
+}
+
+.field-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.field-editor-head .exhibit-letter {
+  width: auto;
+  font-size: 0.9rem;
 }
 
 /* ==========================================================================

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../api';
 import { Download, Save, Send, AlertTriangle, FileCheck2 } from 'lucide-react';
 import { downloadBlobResponse } from '../utils/download';
+import FieldInput from '../components/FieldInput';
 
 const FillForm = () => {
   const { templateId } = useParams();
@@ -127,61 +128,12 @@ const FillForm = () => {
         <form>
           {template.fields && template.fields.length > 0 ? (
             template.fields.map((field, idx) => (
-              <div key={idx} className={`form-group ${field.required ? 'required' : ''}`}>
-                <label>{field.name}</label>
-                {field.type === 'text' && (
-                  <input
-                    type="text"
-                    value={formData[field.name] || ''}
-                    onChange={(e) => handleInputChange(field.name, e.target.value)}
-                    placeholder={`Enter ${field.name}`}
-                    required={field.required}
-                  />
-                )}
-                {field.type === 'checkbox' && (
-                  <input
-                    type="checkbox"
-                    checked={formData[field.name] === 'true' || formData[field.name] === true}
-                    onChange={(e) => handleInputChange(field.name, e.target.checked)}
-                    style={{ marginTop: '0.5rem' }}
-                  />
-                )}
-                {field.type === 'dropdown' && (
-                  <select value={formData[field.name] || ''} onChange={(e) => handleInputChange(field.name, e.target.value)} required={field.required}>
-                    <option value="">Select an option</option>
-                    {field.options?.map((opt, i) => (
-                      <option key={i} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {field.type === 'radio' && (
-                  <div>
-                    {field.options?.map((opt, i) => (
-                      <label key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal', marginBottom: '0.25rem' }}>
-                        <input
-                          type="radio"
-                          name={field.name}
-                          value={opt}
-                          checked={formData[field.name] === opt}
-                          onChange={(e) => handleInputChange(field.name, e.target.value)}
-                        />
-                        {opt}
-                      </label>
-                    ))}
-                  </div>
-                )}
-                {!['text', 'checkbox', 'dropdown', 'radio'].includes(field.type) && (
-                  <input
-                    type="text"
-                    value={formData[field.name] || ''}
-                    onChange={(e) => handleInputChange(field.name, e.target.value)}
-                    placeholder={`Enter ${field.name}`}
-                    required={field.required}
-                  />
-                )}
-              </div>
+              <FieldInput
+                key={idx}
+                field={field}
+                value={formData[field.name]}
+                onChange={(value) => handleInputChange(field.name, value)}
+              />
             ))
           ) : (
             <p style={{ textAlign: 'center' }}>No fields detected on this template</p>

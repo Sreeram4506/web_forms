@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import clientApi from '../api/clientApi';
 import { useClientAuth } from '../context/ClientAuthContext';
 import { Save, Send, LogOut, AlertTriangle } from 'lucide-react';
+import FieldInput from '../components/FieldInput';
 
 const ClientFillForm = () => {
   const { clientName, clientLogout } = useClientAuth();
@@ -117,49 +118,12 @@ const ClientFillForm = () => {
           <form>
             {fields.length > 0 ? (
               fields.map((field, idx) => (
-                <div key={idx} className={`form-group ${field.required ? 'required' : ''}`}>
-                  <label>{field.name}</label>
-                  {field.type === 'checkbox' ? (
-                    <input
-                      type="checkbox"
-                      checked={formData[field.name] === 'true' || formData[field.name] === true}
-                      onChange={(e) => handleInputChange(field.name, e.target.checked)}
-                      style={{ marginTop: '0.5rem' }}
-                    />
-                  ) : field.type === 'dropdown' ? (
-                    <select value={formData[field.name] || ''} onChange={(e) => handleInputChange(field.name, e.target.value)} required={field.required}>
-                      <option value="">Select an option</option>
-                      {field.options?.map((opt, i) => (
-                        <option key={i} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  ) : field.type === 'radio' ? (
-                    <div>
-                      {field.options?.map((opt, i) => (
-                        <label key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal', marginBottom: '0.25rem' }}>
-                          <input
-                            type="radio"
-                            name={field.name}
-                            value={opt}
-                            checked={formData[field.name] === opt}
-                            onChange={(e) => handleInputChange(field.name, e.target.value)}
-                          />
-                          {opt}
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      value={formData[field.name] || ''}
-                      onChange={(e) => handleInputChange(field.name, e.target.value)}
-                      placeholder={`Enter ${field.name}`}
-                      required={field.required}
-                    />
-                  )}
-                </div>
+                <FieldInput
+                  key={idx}
+                  field={field}
+                  value={formData[field.name]}
+                  onChange={(value) => handleInputChange(field.name, value)}
+                />
               ))
             ) : (
               <p style={{ textAlign: 'center' }}>No fields on this form</p>

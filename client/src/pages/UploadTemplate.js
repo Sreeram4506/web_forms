@@ -2,18 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../api';
 import { UploadCloud, FileCheck2, AlertTriangle, Info } from 'lucide-react';
+import { exhibitLetter } from '../utils/exhibitLetter';
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-const exhibitLetter = (index) => {
-  let n = index;
-  let label = '';
-  do {
-    label = String.fromCharCode(65 + (n % 26)) + label;
-    n = Math.floor(n / 26) - 1;
-  } while (n >= 0);
-  return label;
-};
 
 const UploadTemplate = () => {
   const [name, setName] = useState('');
@@ -60,12 +51,13 @@ const UploadTemplate = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setDetectedFields(response.data.template.fields);
-      setSuccess(`Filed. ${response.data.template.fields.length} exhibit${response.data.template.fields.length === 1 ? '' : 's'} detected.`);
+      const { id, fields } = response.data.template;
+      setDetectedFields(fields);
+      setSuccess(`Filed. ${fields.length} exhibit${fields.length === 1 ? '' : 's'} detected.`);
 
       setTimeout(() => {
-        navigate('/dashboard');
-      }, 2200);
+        navigate(`/templates/${id}/fields`);
+      }, 1400);
     } catch (err) {
       setError(err.response?.data?.message || 'Upload failed');
     } finally {

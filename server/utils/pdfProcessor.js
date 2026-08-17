@@ -24,12 +24,16 @@ async function detectPDFFields(pdfBuffer) {
   const fields = form.getFields();
 
   return fields.map((field) => {
+    const name = field.getName();
     const descriptor = {
-      name: field.getName(),
+      name,
+      label: name,
+      hint: '',
       type: 'text',
       defaultValue: '',
       required: false,
       options: [],
+      allowOther: false,
     };
 
     try {
@@ -42,23 +46,69 @@ async function detectPDFFields(pdfBuffer) {
       descriptor.type = 'text';
       descriptor.defaultValue = field.getText() || '';
     } else if (field instanceof PDFCheckBox) {
-      descriptor.type = 'checkbox';
+      descriptor.type = 'boolean';
       descriptor.defaultValue = field.isChecked() ? 'true' : 'false';
     } else if (field instanceof PDFDropdown) {
-      descriptor.type = 'dropdown';
+      descriptor.type = 'choice-single';
       descriptor.options = field.getOptions();
       descriptor.defaultValue = (field.getSelected() || [])[0] || '';
     } else if (field instanceof PDFOptionList) {
-      descriptor.type = 'dropdown';
+      descriptor.type = 'choice-single';
       descriptor.options = field.getOptions();
       descriptor.defaultValue = (field.getSelected() || [])[0] || '';
     } else if (field instanceof PDFRadioGroup) {
-      descriptor.type = 'radio';
+      descriptor.type = 'choice-single';
       descriptor.options = field.getOptions();
       descriptor.defaultValue = field.getSelected() || '';
     }
 
     return descriptor;
+  });
+}
+
+// Finds the page a form field's widget annotation is drawn on, by walking
+// each page's /Annots array and comparing dereferenced dict identity — pdf-lib
+// caches indirect objects per PDFContext, so the same ref always resolves to
+// the same JS object within one loaded document.
+function findWidgetPage(pdfDoc, widget) {
+  for (const page of pdfDoc.getPages()) {
+    const annots = page.node.Annots();
+    if (!annots) continue;
+    for (let i = 0; i < annots.size(); i++) {
+      if (annots.lookup(i) === widget.dict) return page;
+    }
+  }
+  return null;
+}
+
+const SIGNATURE_MIME_RE = /^data:image\/(png|jpe?g);base64,(.+)$/i;
+
+// Draws an uploaded signature image into a text field's on-page position
+// instead of setting text, since PDF AcroForms have no native "image field".
+async function embedSignatureIntoField(pdfDoc, field, dataUrl) {
+  const match = SIGNATURE_MIME_RE.exec(dataUrl);
+  if (!match) {
+    console.warn(`Signature field ${field.getName()}: unsupported image format, skipped`);
+    return;
+  }
+
+  const [, format, base64] = match;
+  const bytes = Buffer.from(base64, 'base64');
+  const image = /png/i.test(format) ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+
+  const widgets = field.acroField.getWidgets();
+  widgets.forEach((widget) => {
+    const page = findWidgetPage(pdfDoc, widget);
+    if (!page) return;
+
+    const rect = widget.getRectangle();
+    const scaled = image.scaleToFit(rect.width, rect.height);
+    page.drawImage(image, {
+      x: rect.x + (rect.width - scaled.width) / 2,
+      y: rect.y + (rect.height - scaled.height) / 2,
+      width: scaled.width,
+      height: scaled.height,
+    });
   });
 }
 
@@ -70,9 +120,10 @@ async function detectPDFFields(pdfBuffer) {
  *
  * @param {Buffer} pdfBuffer raw PDF bytes of the template
  * @param {Object} data values keyed by field name
+ * @param {Array} fields template field descriptors (for signature detection)
  * @returns {Promise<Uint8Array>} filled PDF bytes
  */
-async function fillPDF(pdfBuffer, data = {}) {
+async function fillPDF(pdfBuffer, data = {}, fields = []) {
   const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
   const form = pdfDoc.getForm();
 
@@ -80,17 +131,26 @@ async function fillPDF(pdfBuffer, data = {}) {
   // template supplied no default appearance resource.
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
+  const signatureFieldNames = new Set(
+    fields.filter((f) => f.type === 'signature').map((f) => f.name)
+  );
+
   const skipped = [];
 
-  form.getFields().forEach((field) => {
+  for (const field of form.getFields()) {
     const name = field.getName();
-    if (!Object.prototype.hasOwnProperty.call(data, name)) return;
+    if (!Object.prototype.hasOwnProperty.call(data, name)) continue;
 
     const raw = data[name];
-    if (raw === undefined || raw === null) return;
+    if (raw === undefined || raw === null) continue;
     const value = String(raw);
 
     try {
+      if (signatureFieldNames.has(name)) {
+        if (value) await embedSignatureIntoField(pdfDoc, field, value);
+        continue;
+      }
+
       if (field instanceof PDFTextField) {
         field.setText(value);
       } else if (field instanceof PDFCheckBox) {
@@ -100,19 +160,19 @@ async function fillPDF(pdfBuffer, data = {}) {
         if (truthy) field.check();
         else field.uncheck();
       } else if (field instanceof PDFDropdown || field instanceof PDFOptionList) {
-        if (value === '') return;
+        if (value === '') continue;
         // Accept values outside the declared option list rather than throwing.
         if (!field.getOptions().includes(value)) field.addOptions([value]);
         field.select(value);
       } else if (field instanceof PDFRadioGroup) {
-        if (value === '') return;
+        if (value === '') continue;
         if (field.getOptions().includes(value)) field.select(value);
         else skipped.push(`${name} (no such radio option: ${value})`);
       }
     } catch (err) {
       skipped.push(`${name} (${err.message})`);
     }
-  });
+  }
 
   if (skipped.length) {
     console.warn('fillPDF skipped fields:', skipped.join(', '));

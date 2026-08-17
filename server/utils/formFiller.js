@@ -18,7 +18,7 @@ const { fillDocxTemplate } = require('./docxProcessor');
  */
 async function generateFinalPdf(template, dataObj = {}) {
   if (template.sourceType === 'docx') {
-    const filledDocx = fillDocxTemplate(template.fileData, dataObj);
+    const filledDocx = fillDocxTemplate(template.fileData, dataObj, template.fields);
     return {
       buffer: filledDocx,
       contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -26,7 +26,7 @@ async function generateFinalPdf(template, dataObj = {}) {
     };
   }
 
-  const pdfBytes = await fillPDF(template.fileData, dataObj);
+  const pdfBytes = await fillPDF(template.fileData, dataObj, template.fields);
   return { buffer: Buffer.from(pdfBytes), contentType: 'application/pdf', extension: 'pdf' };
 }
 

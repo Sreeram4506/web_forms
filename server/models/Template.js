@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
 
 const fieldSchema = new mongoose.Schema({
-  name: String,
-  type: String,
+  name: String, // underlying placeholder/AcroForm key, used to fill the source document
+  label: String, // friendly text shown to whoever fills the form; defaults to name
+  hint: String, // optional help text shown under the label
+  type: String, // 'text' | 'choice-single' | 'choice-multi' | 'signature'
   defaultValue: String,
   required: Boolean,
-  options: [String], // For dropdown/checkbox options
+  options: [String], // choice-single/choice-multi option list
+  allowOther: Boolean, // adds an "Other (please specify)" choice with free text
 }, { _id: false });
 
 const templateSchema = new mongoose.Schema({

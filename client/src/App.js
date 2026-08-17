@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import UploadTemplate from './pages/UploadTemplate';
+import EditFields from './pages/EditFields';
 import FillForm from './pages/FillForm';
 import SubmissionsList from './pages/SubmissionsList';
 import AssignmentsList from './pages/AssignmentsList';
@@ -54,6 +55,14 @@ const AppContent = () => {
         element={
           <ProtectedRoute>
             <UploadTemplate />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/templates/:templateId/fields"
+        element={
+          <ProtectedRoute>
+            <EditFields />
           </ProtectedRoute>
         }
       />

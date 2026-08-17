@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from '../api';
-import { FolderOpen, Pencil, Eye, Link2, Trash2, AlertTriangle } from 'lucide-react';
+import { FolderOpen, ListChecks, Pencil, Eye, Link2, Trash2, AlertTriangle } from 'lucide-react';
 
 const docketNumber = (index) => `No. ${String(index + 1).padStart(4, '0')}`;
 
@@ -89,6 +89,9 @@ const Dashboard = () => {
                 </span>
               </span>
               <span className="register-actions">
+                <Link to={`/templates/${template._id}/fields`} className="btn-ghost" title="Edit exhibit labels, hints, and choices">
+                  <ListChecks size={17} />
+                </Link>
                 <Link to={`/fill-form/${template._id}`} className="btn-ghost" title="Preview and fill this form yourself">
                   <Pencil size={17} />
                 </Link>

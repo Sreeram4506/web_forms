@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from '../api';
 import { Copy, Check, Trash2, Download, BookMarked, RefreshCw, AlertTriangle, Stamp } from 'lucide-react';
+import { downloadBlobResponse } from '../utils/download';
 
 const generatePassword = () => Math.random().toString(36).slice(-10);
 
@@ -77,15 +78,9 @@ const AssignmentsList = () => {
   const handleDownload = async (assignment) => {
     try {
       const response = await axios.get(`/api/assignments/${assignment.id}/download`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${assignment.clientName}-${assignment.template?.name || 'filing'}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
+      downloadBlobResponse(response, `${assignment.clientName}-${assignment.template?.name || 'filing'}.pdf`);
     } catch (err) {
-      setError('Failed to download the filed PDF');
+      setError('Failed to download the filed document');
     }
   };
 

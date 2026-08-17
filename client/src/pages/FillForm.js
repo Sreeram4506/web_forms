@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../api';
 import { Download, Save, Send, AlertTriangle, FileCheck2 } from 'lucide-react';
+import { downloadBlobResponse } from '../utils/download';
 
 const FillForm = () => {
   const { templateId } = useParams();
@@ -76,15 +77,9 @@ const FillForm = () => {
       const submissionId = submitResponse.data.submission.id;
       const response = await axios.post(`/api/submissions/${submissionId}/generate-pdf`, {}, { responseType: 'blob' });
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${template.name}-filled.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
+      downloadBlobResponse(response, `${template.name}-filled.pdf`);
 
-      setSuccess('PDF downloaded');
+      setSuccess('Downloaded');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError('Failed to generate PDF');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api';
 import { Download, Trash2, ArrowLeft, ClipboardList, AlertTriangle } from 'lucide-react';
 
 const SubmissionsList = () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api';
 import { Copy, Check, Trash2, Download, BookMarked, RefreshCw, AlertTriangle, Stamp } from 'lucide-react';
 
 const generatePassword = () => Math.random().toString(36).slice(-10);

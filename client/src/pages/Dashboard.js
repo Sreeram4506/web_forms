@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api';
 import { FolderOpen, Pencil, Eye, Link2, Trash2, AlertTriangle } from 'lucide-react';
 
 const docketNumber = (index) => `No. ${String(index + 1).padStart(4, '0')}`;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api';
 import { Download, Save, Send, AlertTriangle, FileCheck2 } from 'lucide-react';
 
 const FillForm = () => {

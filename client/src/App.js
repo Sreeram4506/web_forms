@@ -11,6 +11,7 @@ import UploadTemplate from './pages/UploadTemplate';
 import EditFields from './pages/EditFields';
 import FillForm from './pages/FillForm';
 import SubmissionsList from './pages/SubmissionsList';
+import SubmissionDetail from './pages/SubmissionDetail';
 import AssignmentsList from './pages/AssignmentsList';
 import ClientPortal from './pages/ClientPortal';
 
@@ -79,6 +80,14 @@ const AppContent = () => {
         element={
           <ProtectedRoute>
             <SubmissionsList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/submissions/:submissionId"
+        element={
+          <ProtectedRoute>
+            <SubmissionDetail />
           </ProtectedRoute>
         }
       />

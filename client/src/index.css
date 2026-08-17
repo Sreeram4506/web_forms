@@ -651,6 +651,57 @@ input[type='radio'] {
 }
 
 /* ==========================================================================
+   Answer list (see SubmissionDetail.js)
+   ========================================================================== */
+
+.answer-list {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.answer-row {
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.answer-row:last-child {
+  border-bottom: none;
+}
+
+.answer-row:nth-child(even) {
+  background: var(--paper-sunken);
+}
+
+.answer-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--ink);
+  margin-bottom: 0.3rem;
+}
+
+.answer-value {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+
+.answer-value.is-empty {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.answer-value img {
+  max-height: 90px;
+  max-width: 220px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 0.35rem;
+  display: block;
+}
+
+/* ==========================================================================
    Field editor (see EditFields.js)
    ========================================================================== */
 

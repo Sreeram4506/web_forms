@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../api';
-import { Download, Trash2, ArrowLeft, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Eye, Download, Trash2, ArrowLeft, ClipboardList, AlertTriangle } from 'lucide-react';
 import { downloadBlobResponse } from '../utils/download';
 
 const SubmissionsList = () => {
@@ -100,6 +100,9 @@ const SubmissionsList = () => {
               </span>
               <span className="register-cell-meta">{new Date(submission.createdAt).toLocaleDateString()}</span>
               <span className="register-actions">
+                <Link to={`/submissions/${submission.id}`} title="View answers" className="btn-ghost">
+                  <Eye size={17} />
+                </Link>
                 <button
                   onClick={() => handleDownloadPDF(submission.id)}
                   title={`Download ${template?.sourceType === 'docx' ? 'DOCX' : 'PDF'}`}

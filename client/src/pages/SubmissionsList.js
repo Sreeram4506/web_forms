@@ -12,6 +12,7 @@ const SubmissionsList = () => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId]);
 
   const fetchData = async () => {

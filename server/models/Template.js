@@ -10,8 +10,9 @@ const fieldSchema = new mongoose.Schema({
   options: [String], // choice-single/choice-multi option list
   allowOther: Boolean, // adds an "Other (please specify)" choice with free text
   otherPlaceholder: String, // {{placeholder}} the "Other" row carries, if any
-  source: String, // 'placeholder' (default, {{Field Name}}) | 'checkbox-table' (auto-detected, .docx) | 'checkbox-group' (auto-detected, .pdf)
+  source: String, // 'placeholder' (default, {{Field Name}}) | 'checkbox-table' (auto-detected, .docx) | 'response-line' (auto-detected, .docx) | 'checkbox-group' (auto-detected, .pdf)
   tableIndex: Number, // for source:'checkbox-table', which <w:tbl> in document.xml this maps to
+  responseIndex: Number, // for source:'response-line', this "Response:" blank's position among all response-line matches in document order — without this declared, Mongoose's schema strictness silently drops the property on save, and the fill pass can no longer match a submitted answer back to its blank
   checkboxMap: mongoose.Schema.Types.Mixed, // for source:'checkbox-group', { optionLabel: underlying AcroForm checkbox field name }
 }, { _id: false });
 

@@ -47,11 +47,13 @@ function coerceRefinement(raw, original) {
     out.type = raw.type;
   }
 
-  // Option text for a checkbox table must stay byte-identical to the literal
-  // labels in the document, otherwise the fill pass can no longer match a
-  // selection back to its checkbox and silently stops ticking boxes. Only
-  // fields with no such document binding may have options rewritten.
-  const optionsEditable = original.source !== 'checkbox-table';
+  // Option text for a checkbox table, or a checkbox-group's option labels,
+  // must stay byte-identical to what the fill pass keys off (the document's
+  // literal checkbox labels, or checkboxMap's label->field-name keys),
+  // otherwise a selection can no longer be matched back to its checkbox and
+  // silently stops ticking boxes. Only fields with no such document binding
+  // may have options rewritten.
+  const optionsEditable = original.source !== 'checkbox-table' && original.source !== 'checkbox-group';
   if (optionsEditable && Array.isArray(raw.options)) {
     const cleaned = raw.options
       .filter((o) => typeof o === 'string' && o.trim())
@@ -69,7 +71,7 @@ async function callOpenAI(apiKey, batch) {
     label: f.label || f.name,
     type: f.type,
     options: f.options || [],
-    optionsEditable: f.source !== 'checkbox-table',
+    optionsEditable: f.source !== 'checkbox-table' && f.source !== 'checkbox-group',
   }));
 
   const controller = new AbortController();

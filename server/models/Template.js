@@ -10,8 +10,9 @@ const fieldSchema = new mongoose.Schema({
   options: [String], // choice-single/choice-multi option list
   allowOther: Boolean, // adds an "Other (please specify)" choice with free text
   otherPlaceholder: String, // {{placeholder}} the "Other" row carries, if any
-  source: String, // 'placeholder' (default, {{Field Name}}) | 'checkbox-table' (auto-detected)
+  source: String, // 'placeholder' (default, {{Field Name}}) | 'checkbox-table' (auto-detected, .docx) | 'checkbox-group' (auto-detected, .pdf)
   tableIndex: Number, // for source:'checkbox-table', which <w:tbl> in document.xml this maps to
+  checkboxMap: mongoose.Schema.Types.Mixed, // for source:'checkbox-group', { optionLabel: underlying AcroForm checkbox field name }
 }, { _id: false });
 
 const templateSchema = new mongoose.Schema({

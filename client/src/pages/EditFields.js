@@ -18,7 +18,7 @@ const CHOICE_TYPES = ['choice-single', 'choice-multi'];
 // internal names like "__checkbox_table_4" that mean nothing to an admin, so
 // show what the field actually is instead of its bookkeeping key.
 const fieldOrigin = (field) => {
-  if (field.source === 'checkbox-table') return 'Tick-box question';
+  if (field.source === 'checkbox-table' || field.source === 'checkbox-group') return 'Tick-box question';
   if (field.source === 'response-line') return 'Written answer';
   return field.name;
 };

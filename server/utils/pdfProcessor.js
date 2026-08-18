@@ -8,12 +8,94 @@ const {
   StandardFonts,
 } = require('pdf-lib');
 
+const CHECKBOX_GROUP_PREFIX = '__checkbox_group__';
+
+// Turns a raw field-name segment ("interests_music", "phoneNumber") into a
+// readable label ("Interests Music", "Phone Number") for options and group
+// labels that have no on-page text to draw from.
+function humanizeSegment(segment) {
+  const spaced = segment
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .trim();
+  return spaced ? spaced.replace(/\b\w/g, (c) => c.toUpperCase()) : segment;
+}
+
+// Groups sibling PDFCheckBox fields into one multiple-choice question.
+//
+// A standalone tick box ("I agree to the terms") is a real yes/no and stays
+// type 'boolean'. But a form author who wants a "select all that apply"
+// question authors it as several independent checkboxes organized under one
+// non-terminal parent node in the AcroForm field tree (Adobe Acrobat and
+// LiveCycle both do this) — pdf-lib exposes that as a dot-joined fully
+// qualified name, e.g. "Interests.Music", "Interests.Art", "Interests.Sports".
+// Two or more checkboxes sharing that parent are read as one field's options
+// rather than N disconnected true/false toggles, matching how a checkbox
+// table in a Word template already becomes one choice-multi question.
+//
+// checkboxMap keys the resolved option label back to the exact underlying
+// checkbox field name, so a later admin edit to the options list (reorder,
+// delete) can't desync an index-based mapping — filling only ever looks up
+// a selected label, so a stale/removed one simply fills nothing instead of
+// checking the wrong box.
+function groupCheckboxFields(descriptors) {
+  const byParent = new Map();
+  descriptors.forEach((d) => {
+    if (d.type !== 'boolean') return;
+    const dot = d.name.lastIndexOf('.');
+    if (dot <= 0) return;
+    const parent = d.name.slice(0, dot);
+    if (!byParent.has(parent)) byParent.set(parent, []);
+    byParent.get(parent).push(d);
+  });
+
+  const consumedNames = new Set();
+  const grouped = [];
+
+  for (const [parent, members] of byParent) {
+    if (members.length < 2) continue;
+    members.forEach((m) => consumedNames.add(m.name));
+
+    const options = [];
+    const checked = [];
+    const checkboxMap = {};
+    members.forEach((m) => {
+      const label = humanizeSegment(m.name.slice(parent.length + 1));
+      options.push(label);
+      checkboxMap[label] = m.name;
+      if (m.defaultValue === 'true') checked.push(label);
+    });
+
+    const parentLeaf = parent.slice(parent.lastIndexOf('.') + 1);
+
+    grouped.push({
+      name: `${CHECKBOX_GROUP_PREFIX}${parent}`,
+      label: humanizeSegment(parentLeaf),
+      hint: '',
+      type: 'choice-multi',
+      defaultValue: checked.join(', '),
+      required: members.some((m) => m.required),
+      options,
+      allowOther: false,
+      source: 'checkbox-group',
+      checkboxMap,
+    });
+  }
+
+  const ungrouped = descriptors.filter((d) => !consumedNames.has(d.name));
+  return [...ungrouped, ...grouped];
+}
+
 /**
  * Detect the fillable form fields inside a PDF.
  *
  * Uses pdf-lib's AcroForm reader, which returns the field name, concrete type
  * and (for choice fields) the available options. Throws if the buffer is not a
  * readable PDF so the caller can surface a real error to the user.
+ *
+ * Sibling checkboxes authored as one logical question (see
+ * groupCheckboxFields) are collapsed into a single choice-multi descriptor
+ * rather than returned as separate boolean fields.
  *
  * @param {Buffer} pdfBuffer raw PDF bytes
  * @returns {Promise<Array>} detected field descriptors
@@ -23,7 +105,7 @@ async function detectPDFFields(pdfBuffer) {
   const form = pdfDoc.getForm();
   const fields = form.getFields();
 
-  return fields.map((field) => {
+  const descriptors = fields.map((field) => {
     const name = field.getName();
     const descriptor = {
       name,
@@ -64,6 +146,8 @@ async function detectPDFFields(pdfBuffer) {
 
     return descriptor;
   });
+
+  return groupCheckboxFields(descriptors);
 }
 
 // Finds the page a form field's widget annotation is drawn on, by walking
@@ -171,6 +255,26 @@ async function fillPDF(pdfBuffer, data = {}, fields = []) {
       }
     } catch (err) {
       skipped.push(`${name} (${err.message})`);
+    }
+  }
+
+  // Checkbox-group fields (see groupCheckboxFields) have no real PDF field of
+  // their own — their submitted value lives under a synthetic group name and
+  // has to be fanned back out to each member checkbox individually.
+  for (const group of fields) {
+    if (group.source !== 'checkbox-group' || !group.checkboxMap) continue;
+    const raw = data[group.name];
+    if (raw === undefined || raw === null) continue;
+    const selected = new Set(String(raw).split(', ').filter(Boolean));
+
+    for (const [optionLabel, memberName] of Object.entries(group.checkboxMap)) {
+      try {
+        const checkbox = form.getCheckBox(memberName);
+        if (selected.has(optionLabel)) checkbox.check();
+        else checkbox.uncheck();
+      } catch (err) {
+        skipped.push(`${memberName} (${err.message})`);
+      }
     }
   }
 
